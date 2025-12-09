@@ -472,6 +472,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -554,19 +561,19 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="social-share-buttons">
         <span class="share-label">Share:</span>
-        <button class="share-button share-twitter tooltip" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" aria-label="Share on Twitter">
+        <button class="share-button share-twitter tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" aria-label="Share on Twitter">
           <span class="share-icon">🐦</span>
           <span class="tooltip-text">Share on Twitter</span>
         </button>
-        <button class="share-button share-facebook tooltip" data-activity="${name}" aria-label="Share on Facebook">
+        <button class="share-button share-facebook tooltip" data-activity="${escapeHtml(name)}" aria-label="Share on Facebook">
           <span class="share-icon">📘</span>
           <span class="tooltip-text">Share on Facebook</span>
         </button>
-        <button class="share-button share-linkedin tooltip" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" aria-label="Share on LinkedIn">
+        <button class="share-button share-linkedin tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" aria-label="Share on LinkedIn">
           <span class="share-icon">💼</span>
           <span class="tooltip-text">Share on LinkedIn</span>
         </button>
-        <button class="share-button share-link tooltip" data-activity="${name}" aria-label="Copy link">
+        <button class="share-button share-link tooltip" data-activity="${escapeHtml(name)}" aria-label="Copy link">
           <span class="share-icon">🔗</span>
           <span class="tooltip-text">Copy link to clipboard</span>
         </button>
@@ -612,10 +619,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const linkedinButton = activityCard.querySelector(".share-linkedin");
     const linkButton = activityCard.querySelector(".share-link");
 
-    twitterButton.addEventListener("click", () => handleTwitterShare(name, details.description));
-    facebookButton.addEventListener("click", () => handleFacebookShare(name));
-    linkedinButton.addEventListener("click", () => handleLinkedInShare(name, details.description));
-    linkButton.addEventListener("click", () => handleCopyLink(name));
+    twitterButton.addEventListener("click", () => {
+      const activityName = twitterButton.getAttribute('data-activity');
+      const description = twitterButton.getAttribute('data-description');
+      handleTwitterShare(activityName, description);
+    });
+    facebookButton.addEventListener("click", () => {
+      const activityName = facebookButton.getAttribute('data-activity');
+      handleFacebookShare(activityName);
+    });
+    linkedinButton.addEventListener("click", () => {
+      const activityName = linkedinButton.getAttribute('data-activity');
+      const description = linkedinButton.getAttribute('data-description');
+      handleLinkedInShare(activityName, description);
+    });
+    linkButton.addEventListener("click", () => {
+      const activityName = linkButton.getAttribute('data-activity');
+      handleCopyLink(activityName);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -897,19 +918,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = getActivityUrl(activityName);
     const text = `Check out ${activityName} at Mergington High School! ${description}`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    window.open(twitterUrl, '_blank', 'width=550,height=420');
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
   }
 
   function handleFacebookShare(activityName) {
     const url = getActivityUrl(activityName);
     const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-    window.open(facebookUrl, '_blank', 'width=550,height=420');
+    window.open(facebookUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
   }
 
   function handleLinkedInShare(activityName, description) {
     const url = getActivityUrl(activityName);
     const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-    window.open(linkedinUrl, '_blank', 'width=550,height=420');
+    window.open(linkedinUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
   }
 
   function handleCopyLink(activityName) {
