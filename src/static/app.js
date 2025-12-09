@@ -495,6 +495,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -575,6 +583,25 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="social-share-buttons">
+        <span class="share-label">Share:</span>
+        <button class="share-button share-twitter tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" aria-label="Share on Twitter">
+          <span class="share-icon">🐦</span>
+          <span class="tooltip-text">Share on Twitter</span>
+        </button>
+        <button class="share-button share-facebook tooltip" data-activity="${escapeHtml(name)}" aria-label="Share on Facebook">
+          <span class="share-icon">📘</span>
+          <span class="tooltip-text">Share on Facebook</span>
+        </button>
+        <button class="share-button share-linkedin tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" aria-label="Share on LinkedIn">
+          <span class="share-icon">💼</span>
+          <span class="tooltip-text">Share on LinkedIn</span>
+        </button>
+        <button class="share-button share-link tooltip" data-activity="${escapeHtml(name)}" aria-label="Copy link">
+          <span class="share-icon">🔗</span>
+          <span class="tooltip-text">Copy link to clipboard</span>
+        </button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -609,6 +636,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for social share buttons
+    const twitterButton = activityCard.querySelector(".share-twitter");
+    const facebookButton = activityCard.querySelector(".share-facebook");
+    const linkedinButton = activityCard.querySelector(".share-linkedin");
+    const linkButton = activityCard.querySelector(".share-link");
+
+    twitterButton.addEventListener("click", () => {
+      const activityName = twitterButton.getAttribute('data-activity');
+      const description = twitterButton.getAttribute('data-description');
+      handleTwitterShare(activityName, description);
+    });
+    facebookButton.addEventListener("click", () => {
+      const activityName = facebookButton.getAttribute('data-activity');
+      handleFacebookShare(activityName);
+    });
+    linkedinButton.addEventListener("click", () => {
+      const activityName = linkedinButton.getAttribute('data-activity');
+      const description = linkedinButton.getAttribute('data-description');
+      handleLinkedInShare(activityName, description);
+    });
+    linkButton.addEventListener("click", () => {
+      const activityName = linkButton.getAttribute('data-activity');
+      handleCopyLink(activityName);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -877,6 +929,75 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Social sharing functions
+  function getActivityUrl(activityName) {
+    if (!activityName) return window.location.origin + window.location.pathname;
+    // Create a URL that points to the activity
+    const baseUrl = window.location.origin + window.location.pathname;
+    // Use URL hash to indicate the activity
+    return `${baseUrl}#${encodeURIComponent(activityName)}`;
+  }
+
+  function handleTwitterShare(activityName, description) {
+    const url = getActivityUrl(activityName);
+    const text = `Check out ${activityName || 'this activity'} at Mergington High School! ${description || ''}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
+  }
+
+  function handleFacebookShare(activityName) {
+    const url = getActivityUrl(activityName);
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(facebookUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
+  }
+
+  function handleLinkedInShare(activityName, description) {
+    const url = getActivityUrl(activityName);
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    window.open(linkedinUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
+  }
+
+  function handleCopyLink(activityName) {
+    const url = getActivityUrl(activityName);
+    
+    // Try to use the modern clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(() => {
+        showMessage('Link copied to clipboard!', 'success');
+      }).catch(err => {
+        // Fallback if clipboard API fails
+        fallbackCopyToClipboard(url);
+      });
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopyToClipboard(url);
+    }
+  }
+
+  function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        showMessage('Link copied to clipboard!', 'success');
+      } else {
+        showMessage('Failed to copy link. Please copy manually: ' + text, 'error');
+      }
+    } catch (err) {
+      showMessage('Failed to copy link. Please copy manually: ' + text, 'error');
+    }
+    
+    document.body.removeChild(textArea);
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
