@@ -474,6 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Helper function to escape HTML to prevent XSS
   function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -908,6 +909,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Social sharing functions
   function getActivityUrl(activityName) {
+    if (!activityName) return window.location.origin + window.location.pathname;
     // Create a URL that points to the activity
     const baseUrl = window.location.origin + window.location.pathname;
     // Use URL hash to indicate the activity
@@ -916,7 +918,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleTwitterShare(activityName, description) {
     const url = getActivityUrl(activityName);
-    const text = `Check out ${activityName} at Mergington High School! ${description}`;
+    const text = `Check out ${activityName || 'this activity'} at Mergington High School! ${description || ''}`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=550,height=420');
   }
